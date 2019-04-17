@@ -926,20 +926,25 @@ func (s *SqlSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts
 	result := store.NewSupplierResult()
 	var groups []*model.Group
 
-	groupsQuery := s.getQueryBuilder().Select("u.*").From("Users u")
+	groupsQuery := s.getQueryBuilder().Select("g.*").From("UserGroups g").Limit(uint64(perPage)).Offset(uint64(page * perPage)).OrderBy("g.DisplayName")
 
 	if opts.Q != nil {
-		groupsQuery.Where("u.Name LIKE ?", opts.Q).Where("u.DisplayName LIKE ?", opts.Q)
+		pattern := fmt.Sprintf("%%%s%%", *opts.Q)
+		groupsQuery = groupsQuery.Where("g.Name LIKE ? OR g.DisplayName LIKE ?", pattern, pattern)
 	}
 
 	if opts.NotAssociatedToTeam != nil {
-		groupsQuery.Where(`
-			NOT IN (
-				SELECT * FROM UserGroups 
-				JOIN GroupTeams ON GroupTeams.GroupId = UserGroups.Id
-				WHERE GroupTeams.DeleteAt = 0
-				AND UserGroups.DeleteAt = 0
-				AND GroupTeams.TeamId = :TeamId
+		groupsQuery = groupsQuery.Where(`
+			g.Id NOT IN (
+				SELECT 
+					Id 
+				FROM 
+					UserGroups
+					JOIN GroupTeams ON GroupTeams.GroupId = UserGroups.Id
+				WHERE 
+					GroupTeams.DeleteAt = 0
+					AND UserGroups.DeleteAt = 0
+					AND GroupTeams.TeamId = ?
 			)
 		`, opts.NotAssociatedToTeam)
 	}

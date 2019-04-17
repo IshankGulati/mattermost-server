@@ -74,14 +74,17 @@ func getGroups(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_SYSTEM) {
-		c.SetPermissionError(model.PERMISSION_MANAGE_SYSTEM)
+	if !c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_TEAM) {
+		c.SetPermissionError(model.PERMISSION_MANAGE_TEAM)
 		return
 	}
 
-	opts := model.GroupSearchOpts{
-		Q:                   &c.Params.Q,
-		NotAssociatedToTeam: &c.Params.NotAssociatedToTeam,
+	opts := model.GroupSearchOpts{}
+	if len(c.Params.Q) > 2 {
+		opts.Q = &c.Params.Q
+	}
+	if len(c.Params.NotAssociatedToTeam) == 26 {
+		opts.NotAssociatedToTeam = &c.Params.NotAssociatedToTeam
 	}
 
 	groups, err := c.App.GetGroupsPage(c.Params.Page, c.Params.PerPage, opts)
