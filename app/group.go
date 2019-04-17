@@ -180,3 +180,11 @@ func (a *App) GetGroupsByTeam(teamId string, page, perPage int) ([]*model.Group,
 	}
 	return result.Data.([]*model.Group), nil
 }
+
+func (a *App) GetGroupsPage(page, perPage int, opts model.GroupSearchOpts) ([]*model.Group, *model.AppError) {
+	result := <-a.Srv.Store.Group().GetGroupsPage(page, perPage, opts)
+	if result.Err != nil {
+		return nil, result.Err
+	}
+	return result.Data.([]*model.Group), nil
+}

@@ -48,10 +48,15 @@ type GroupPatch struct {
 	Description *string `json:"description"`
 }
 
-type GroupSearchOpts struct {
+type LdapGroupSearchOpts struct {
 	Q            string
 	IsLinked     *bool
 	IsConfigured *bool
+}
+
+type GroupSearchOpts struct {
+	Q                   *string
+	NotAssociatedToTeam *string
 }
 
 func (group *Group) Patch(patch *GroupPatch) {

@@ -118,3 +118,8 @@ func (s *RedisSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page
 	// TODO: Redis caching.
 	return s.Next().GetGroupsByTeam(ctx, teamId, page, perPage, hints...)
 }
+
+func (s *RedisSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts model.GroupSearchOpts, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
+	// TODO: Redis caching.
+	return s.Next().GetGroupsPage(ctx, page, perPage, opts, hints...)
+}

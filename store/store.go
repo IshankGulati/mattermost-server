@@ -596,6 +596,7 @@ type GroupStore interface {
 
 	GetGroupsByChannel(channelId string, page, perPage int) StoreChannel
 	GetGroupsByTeam(teamId string, page, perPage int) StoreChannel
+	GetGroupsPage(page, perPage int, opts model.GroupSearchOpts) StoreChannel
 }
 
 type LinkMetadataStore interface {

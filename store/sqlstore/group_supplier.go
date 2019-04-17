@@ -921,3 +921,40 @@ func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, 
 
 	return result
 }
+
+func (s *SqlSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts model.GroupSearchOpts, hints ...store.LayeredStoreHint) *store.LayeredStoreSupplierResult {
+	result := store.NewSupplierResult()
+	var groups []*model.Group
+
+	groupsQuery := s.getQueryBuilder().Select("u.*").From("Users u")
+
+	if opts.Q != nil {
+		groupsQuery.Where("u.Name LIKE ?", opts.Q).Where("u.DisplayName LIKE ?", opts.Q)
+	}
+
+	if opts.NotAssociatedToTeam != nil {
+		groupsQuery.Where(`
+			NOT IN (
+				SELECT * FROM UserGroups 
+				JOIN GroupTeams ON GroupTeams.GroupId = UserGroups.Id
+				WHERE GroupTeams.DeleteAt = 0
+				AND UserGroups.DeleteAt = 0
+				AND GroupTeams.TeamId = :TeamId
+			)
+		`, opts.NotAssociatedToTeam)
+	}
+
+	queryString, args, err := groupsQuery.ToSql()
+	if err != nil {
+		result.Err = model.NewAppError("SqlGroupStore.GetGroupsPage", "store.sql_group.app_error", nil, err.Error(), http.StatusInternalServerError)
+		return result
+	}
+
+	if _, err = s.GetReplica().Select(&groups, queryString, args...); err != nil {
+		result.Err = model.NewAppError("SqlGroupStore.GetGroupsPage", "store.select_error", nil, err.Error(), http.StatusInternalServerError)
+		return result
+	}
+
+	result.Data = groups
+	return result
+}
