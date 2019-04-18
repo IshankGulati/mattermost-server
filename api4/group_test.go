@@ -661,24 +661,27 @@ func TestGetGroupsByTeam(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	_, response := th.SystemAdminClient.GetGroupsByTeam("asdfasdf", 0, 60)
+	page := model.NewInt(0)
+	perPage := model.NewInt(60)
+
+	_, response := th.SystemAdminClient.GetGroupsByTeam("asdfasdf", page, perPage)
 	CheckBadRequestStatus(t, response)
 
 	th.App.SetLicense(nil)
 
-	_, response = th.SystemAdminClient.GetGroupsByTeam(th.BasicTeam.Id, 0, 60)
+	_, response = th.SystemAdminClient.GetGroupsByTeam(th.BasicTeam.Id, page, perPage)
 	CheckNotImplementedStatus(t, response)
 
 	th.App.SetLicense(model.NewTestLicense("ldap"))
 
-	_, response = th.Client.GetGroupsByTeam(th.BasicTeam.Id, 0, 60)
+	_, response = th.Client.GetGroupsByTeam(th.BasicTeam.Id, page, perPage)
 	CheckForbiddenStatus(t, response)
 
-	groups, response := th.SystemAdminClient.GetGroupsByTeam(th.BasicTeam.Id, 0, 60)
+	groups, response := th.SystemAdminClient.GetGroupsByTeam(th.BasicTeam.Id, page, perPage)
 	assert.Nil(t, response.Error)
 	assert.ElementsMatch(t, []*model.Group{group}, groups)
 
-	groups, response = th.SystemAdminClient.GetGroupsByTeam(model.NewId(), 0, 60)
+	groups, response = th.SystemAdminClient.GetGroupsByTeam(model.NewId(), page, perPage)
 	assert.Nil(t, response.Error)
 	assert.Empty(t, groups)
 }

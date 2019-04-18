@@ -3323,7 +3323,7 @@ func (c *Client4) GetGroupsByChannel(channelId string, page, perPage int) ([]*Gr
 }
 
 // GetLdapGroupsByTeam retrieves the Mattermost Groups associated with a given team
-func (c *Client4) GetGroupsByTeam(teamId string, page, perPage int) ([]*Group, *Response) {
+func (c *Client4) GetGroupsByTeam(teamId string, page, perPage *int) ([]*Group, *Response) {
 	path := fmt.Sprintf("%s/groups?page=%v&per_page=%v", c.GetTeamRoute(teamId), page, perPage)
 	r, appErr := c.DoApiGet(path, "")
 	if appErr != nil {

@@ -238,11 +238,11 @@ func (_m *GroupStore) GetGroupsByChannel(channelId string, page int, perPage int
 }
 
 // GetGroupsByTeam provides a mock function with given fields: teamId, page, perPage
-func (_m *GroupStore) GetGroupsByTeam(teamId string, page int, perPage int) store.StoreChannel {
+func (_m *GroupStore) GetGroupsByTeam(teamId string, page, perPage *int) store.StoreChannel {
 	ret := _m.Called(teamId, page, perPage)
 
 	var r0 store.StoreChannel
-	if rf, ok := ret.Get(0).(func(string, int, int) store.StoreChannel); ok {
+	if rf, ok := ret.Get(0).(func(string, *int, *int) store.StoreChannel); ok {
 		r0 = rf(teamId, page, perPage)
 	} else {
 		if ret.Get(0) != nil {

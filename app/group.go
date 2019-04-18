@@ -173,7 +173,7 @@ func (a *App) GetGroupsByChannel(channelId string, page, perPage int) ([]*model.
 	return result.Data.([]*model.Group), nil
 }
 
-func (a *App) GetGroupsByTeam(teamId string, page, perPage int) ([]*model.Group, *model.AppError) {
+func (a *App) GetGroupsByTeam(teamId string, page, perPage *int) ([]*model.Group, *model.AppError) {
 	result := <-a.Srv.Store.Group().GetGroupsByTeam(teamId, page, perPage)
 	if result.Err != nil {
 		return nil, result.Err

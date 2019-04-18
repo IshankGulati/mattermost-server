@@ -63,6 +63,7 @@ type Params struct {
 	IsLinked            *bool
 	IsConfigured        *bool
 	NotAssociatedToTeam string
+	Paginate            *bool
 }
 
 func ParamsFromRequest(r *http.Request) *Params {
@@ -247,6 +248,10 @@ func ParamsFromRequest(r *http.Request) *Params {
 	}
 
 	params.NotAssociatedToTeam = query.Get("not_associated_to_team")
+
+	if val, err := strconv.ParseBool(query.Get("paginate")); err == nil {
+		params.Paginate = &val
+	}
 
 	return params
 }

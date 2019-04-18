@@ -80,7 +80,7 @@ func getGroups(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	opts := model.GroupSearchOpts{}
-	if len(c.Params.Q) > 2 {
+	if len(c.Params.Q) > 1 {
 		opts.Q = &c.Params.Q
 	}
 	if len(c.Params.NotAssociatedToTeam) == 26 {
@@ -524,7 +524,15 @@ func getGroupsByTeam(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groups, err := c.App.GetGroupsByTeam(c.Params.TeamId, c.Params.Page, c.Params.PerPage)
+	var groups []*model.Group
+	var err *model.AppError
+
+	if c.Params.Paginate != nil && !*c.Params.Paginate {
+		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, nil, nil)
+	} else {
+		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, &c.Params.Page, &c.Params.PerPage)
+	}
+
 	if err != nil {
 		c.Err = err
 		return

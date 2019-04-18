@@ -888,30 +888,29 @@ func (s *SqlSupplier) ChannelMembersToRemove(ctx context.Context, hints ...store
 	return result
 }
 
-func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage int, hints ...store.LayeredStoreHint) *store.LayeredStoreSupplierResult {
+func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, hints ...store.LayeredStoreHint) *store.LayeredStoreSupplierResult {
 	result := store.NewSupplierResult()
 
-	var groups []*model.Group
-	offset := page * perPage
-	_, err := s.GetReplica().Select(&groups, `
-		SELECT
-			ug.*
-		FROM
-			GroupTeams gt
-		LEFT JOIN
-			UserGroups ug
-		ON
-			gt.GroupId = ug.Id
-		WHERE
-			ug.DeleteAt = 0
-		AND
-			gt.TeamId = :TeamId
-		ORDER BY
-			ug.DisplayName
-		LIMIT :Limit
-		OFFSET :Offset`,
-		map[string]interface{}{"TeamId": teamId, "Limit": perPage, "Offset": offset})
+	query := s.getQueryBuilder().
+		Select("ug.*").
+		From("GroupTeams gt").
+		LeftJoin("UserGroups ug ON gt.GroupId = ug.Id").
+		Where("ug.DeleteAt = 0 AND gt.TeamId = ?", teamId)
 
+	if page != nil && perPage != nil {
+		offset := uint64(*page * *perPage)
+		query = query.OrderBy("ug.DisplayName").Limit(uint64(*perPage)).Offset(offset)
+	}
+
+	queryString, args, err := query.ToSql()
+	if err != nil {
+		result.Err = model.NewAppError("SqlGroupStore.GetGroupsByTeam", "store.sql_group.app_error", nil, err.Error(), http.StatusInternalServerError)
+		return result
+	}
+
+	var groups []*model.Group
+
+	_, err = s.GetReplica().Select(&groups, queryString, args...)
 	if err != nil {
 		result.Err = model.NewAppError("SqlGroupStore.GetGroupsByTeam", "store.select_error", nil, err.Error(), http.StatusInternalServerError)
 		return result

@@ -472,7 +472,7 @@ func (s *LayeredGroupStore) GetGroupsByChannel(channelId string, page, perPage i
 	})
 }
 
-func (s *LayeredGroupStore) GetGroupsByTeam(teamId string, page, perPage int) StoreChannel {
+func (s *LayeredGroupStore) GetGroupsByTeam(teamId string, page, perPage *int) StoreChannel {
 	return s.RunQuery(func(supplier LayeredStoreSupplier) *LayeredStoreSupplierResult {
 		return supplier.GetGroupsByTeam(s.TmpContext, teamId, page, perPage)
 	})

@@ -114,7 +114,7 @@ func (s *RedisSupplier) GetGroupsByChannel(ctx context.Context, channelId string
 	return s.Next().GetGroupsByChannel(ctx, channelId, page, perPage, hints...)
 }
 
-func (s *RedisSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage int, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
+func (s *RedisSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
 	// TODO: Redis caching.
 	return s.Next().GetGroupsByTeam(ctx, teamId, page, perPage, hints...)
 }
