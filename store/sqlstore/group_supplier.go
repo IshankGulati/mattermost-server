@@ -927,9 +927,19 @@ func (s *SqlSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts
 
 	groupsQuery := s.getQueryBuilder().Select("g.*").From("UserGroups g").Limit(uint64(perPage)).Offset(uint64(page * perPage)).OrderBy("g.DisplayName")
 
+	if opts.IncludeMemberCount {
+		groupsQuery = s.getQueryBuilder().
+			Select("g.*, coalesce(Members.MemberCount, 0) AS MemberCount").
+			From("UserGroups g").
+			LeftJoin("(SELECT GroupMembers.GroupId, COUNT(*) AS MemberCount FROM GroupMembers WHERE GroupMembers.DeleteAt = 0 GROUP BY GroupId) AS Members ON Members.GroupId = g.Id").
+			Limit(uint64(perPage)).
+			Offset(uint64(page * perPage)).
+			OrderBy("g.DisplayName")
+	}
+
 	if opts.Q != nil {
 		pattern := fmt.Sprintf("%%%s%%", *opts.Q)
-		groupsQuery = groupsQuery.Where("g.Name LIKE ? OR g.DisplayName LIKE ?", pattern, pattern)
+		groupsQuery = groupsQuery.Where("(g.Name LIKE ? OR g.DisplayName LIKE ?)", pattern, pattern)
 	}
 
 	if opts.NotAssociatedToTeam != nil {

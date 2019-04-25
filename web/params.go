@@ -64,6 +64,7 @@ type Params struct {
 	IsConfigured        *bool
 	NotAssociatedToTeam string
 	Paginate            *bool
+	IncludeMemberCount  bool
 }
 
 func ParamsFromRequest(r *http.Request) *Params {
@@ -251,6 +252,10 @@ func ParamsFromRequest(r *http.Request) *Params {
 
 	if val, err := strconv.ParseBool(query.Get("paginate")); err == nil {
 		params.Paginate = &val
+	}
+
+	if val, err := strconv.ParseBool(query.Get("include_member_count")); err == nil {
+		params.IncludeMemberCount = val
 	}
 
 	return params
