@@ -540,10 +540,18 @@ func getGroupsByTeam(c *Context, w http.ResponseWriter, r *http.Request) {
 	var groups []*model.Group
 	var err *model.AppError
 
+	opts := model.GroupSearchOpts{}
+	if len(c.Params.Q) > 1 {
+		opts.Q = &c.Params.Q
+	}
+	if c.Params.IncludeMemberCount {
+		opts.IncludeMemberCount = true
+	}
+
 	if c.Params.Paginate != nil && !*c.Params.Paginate {
-		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, nil, nil)
+		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, nil, nil, opts)
 	} else {
-		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, &c.Params.Page, &c.Params.PerPage)
+		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, &c.Params.Page, &c.Params.PerPage, opts)
 	}
 
 	if err != nil {

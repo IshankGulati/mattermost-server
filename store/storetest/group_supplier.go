@@ -1752,7 +1752,7 @@ func testGetGroupsByTeam(t *testing.T, ss store.Store) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			res := <-ss.Group().GetGroupsByTeam(tc.TeamId, &tc.Page, &tc.PerPage)
+			res := <-ss.Group().GetGroupsByTeam(tc.TeamId, &tc.Page, &tc.PerPage, model.GroupSearchOpts{})
 			require.Nil(t, res.Err)
 			require.ElementsMatch(t, tc.Result, res.Data.([]*model.Group))
 		})

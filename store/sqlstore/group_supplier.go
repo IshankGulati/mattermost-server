@@ -888,7 +888,7 @@ func (s *SqlSupplier) ChannelMembersToRemove(ctx context.Context, hints ...store
 	return result
 }
 
-func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, hints ...store.LayeredStoreHint) *store.LayeredStoreSupplierResult {
+func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, opts model.GroupSearchOpts, hints ...store.LayeredStoreHint) *store.LayeredStoreSupplierResult {
 	result := store.NewSupplierResult()
 
 	query := s.getQueryBuilder().
@@ -896,6 +896,25 @@ func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, 
 		From("GroupTeams gt").
 		LeftJoin("UserGroups ug ON gt.GroupId = ug.Id").
 		Where("ug.DeleteAt = 0 AND gt.TeamId = ?", teamId)
+
+	if opts.IncludeMemberCount {
+		query = s.getQueryBuilder().
+			Select("ug.*, coalesce(Members.MemberCount, 0) AS MemberCount").
+			From("UserGroups ug").
+			LeftJoin("(SELECT GroupMembers.GroupId, COUNT(*) AS MemberCount FROM GroupMembers WHERE GroupMembers.DeleteAt = 0 GROUP BY GroupId) AS Members ON Members.GroupId = ug.Id").
+			LeftJoin("GroupTeams ON GroupTeams.GroupId = ug.Id").
+			Where("GroupTeams.TeamId = ?", teamId).
+			OrderBy("ug.DisplayName")
+	}
+
+	if opts.Q != nil && len(*opts.Q) > 0 {
+		pattern := fmt.Sprintf("%%%s%%", *opts.Q)
+		operatorKeyword := "ILIKE"
+		if s.DriverName() == model.DATABASE_DRIVER_MYSQL {
+			operatorKeyword = "LIKE"
+		}
+		query = query.Where(fmt.Sprintf("(ug.Name %[1]s ? OR ug.DisplayName %[1]s ?)", operatorKeyword), pattern, pattern)
+	}
 
 	if page != nil && perPage != nil {
 		offset := uint64(*page * *perPage)
@@ -907,7 +926,7 @@ func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, 
 		result.Err = model.NewAppError("SqlGroupStore.GetGroupsByTeam", "store.sql_group.app_error", nil, err.Error(), http.StatusInternalServerError)
 		return result
 	}
-
+	fmt.Println(queryString)
 	var groups []*model.Group
 
 	_, err = s.GetReplica().Select(&groups, queryString, args...)
@@ -937,9 +956,13 @@ func (s *SqlSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts
 			OrderBy("g.DisplayName")
 	}
 
-	if opts.Q != nil {
+	if opts.Q != nil && len(*opts.Q) > 0 {
 		pattern := fmt.Sprintf("%%%s%%", *opts.Q)
-		groupsQuery = groupsQuery.Where("(g.Name LIKE ? OR g.DisplayName LIKE ?)", pattern, pattern)
+		operatorKeyword := "ILIKE"
+		if s.DriverName() == model.DATABASE_DRIVER_MYSQL {
+			operatorKeyword = "LIKE"
+		}
+		groupsQuery = groupsQuery.Where(fmt.Sprintf("(g.Name %[1]s ? OR g.DisplayName %[1]s ?)", operatorKeyword), pattern, pattern)
 	}
 
 	if opts.NotAssociatedToTeam != nil {

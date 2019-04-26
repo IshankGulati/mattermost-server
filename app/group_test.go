@@ -241,11 +241,11 @@ func TestGetGroupsByTeam(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, gs)
 
-	groups, err := th.App.GetGroupsByTeam(th.BasicTeam.Id, 0, 60)
+	groups, err := th.App.GetGroupsByTeam(th.BasicTeam.Id, 0, 60, model.GroupSearchOpts{})
 	require.Nil(t, err)
 	require.ElementsMatch(t, []*model.Group{group}, groups)
 
-	groups, err = th.App.GetGroupsByTeam(model.NewId(), 0, 60)
+	groups, err = th.App.GetGroupsByTeam(model.NewId(), 0, 60, model.GroupSearchOpts{})
 	require.Nil(t, err)
 	require.Empty(t, groups)
 }

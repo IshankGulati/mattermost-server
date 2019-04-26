@@ -113,8 +113,8 @@ func (s *LocalCacheSupplier) GetGroupsByChannel(ctx context.Context, channelId s
 	return s.Next().GetGroupsByChannel(ctx, channelId, page, perPage, hints...)
 }
 
-func (s *LocalCacheSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
-	return s.Next().GetGroupsByTeam(ctx, teamId, page, perPage, hints...)
+func (s *LocalCacheSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, perPage *int, opts model.GroupSearchOpts, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
+	return s.Next().GetGroupsByTeam(ctx, teamId, page, perPage, opts, hints...)
 }
 
 func (s *LocalCacheSupplier) GetGroupsPage(ctx context.Context, page, perPage int, opts model.GroupSearchOpts, hints ...LayeredStoreHint) *LayeredStoreSupplierResult {
