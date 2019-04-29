@@ -895,7 +895,7 @@ func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, 
 		Select("ug.*").
 		From("GroupTeams gt").
 		LeftJoin("UserGroups ug ON gt.GroupId = ug.Id").
-		Where("ug.DeleteAt = 0 AND gt.TeamId = ?", teamId)
+		Where("ug.DeleteAt = 0 AND gt.TeamId = ? AND gt.DeleteAt = 0", teamId)
 
 	if opts.IncludeMemberCount {
 		query = s.getQueryBuilder().
