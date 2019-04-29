@@ -903,7 +903,7 @@ func (s *SqlSupplier) GetGroupsByTeam(ctx context.Context, teamId string, page, 
 			From("UserGroups ug").
 			LeftJoin("(SELECT GroupMembers.GroupId, COUNT(*) AS MemberCount FROM GroupMembers WHERE GroupMembers.DeleteAt = 0 GROUP BY GroupId) AS Members ON Members.GroupId = ug.Id").
 			LeftJoin("GroupTeams ON GroupTeams.GroupId = ug.Id").
-			Where("GroupTeams.TeamId = ?", teamId).
+			Where("GroupTeams.DeleteAt = 0 AND GroupTeams.TeamId = ?", teamId).
 			OrderBy("ug.DisplayName")
 	}
 

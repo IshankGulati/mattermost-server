@@ -439,9 +439,17 @@ func unlinkGroupSyncable(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.App.SessionHasPermissionTo(c.App.Session, model.PERMISSION_MANAGE_SYSTEM) {
-		c.SetPermissionError(model.PERMISSION_MANAGE_SYSTEM)
-		return
+	switch syncableType {
+	case model.GroupSyncableTypeTeam:
+		if !c.App.SessionHasPermissionToTeam(c.App.Session, syncableID, model.PERMISSION_MANAGE_TEAM) {
+			c.SetPermissionError(model.PERMISSION_MANAGE_TEAM)
+			return
+		}
+	case model.GroupSyncableTypeChannel:
+		if !c.App.SessionHasPermissionToChannel(c.App.Session, syncableID, model.PERMISSION_MANAGE_PUBLIC_CHANNEL_MEMBERS) {
+			c.SetPermissionError(model.PERMISSION_MANAGE_PRIVATE_CHANNEL_MEMBERS)
+			return
+		}
 	}
 
 	_, err := c.App.DeleteGroupSyncable(c.Params.GroupId, syncableID, syncableType)
@@ -538,6 +546,7 @@ func getGroupsByTeam(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var groups []*model.Group
+	var totalCount int
 	var err *model.AppError
 
 	opts := model.GroupSearchOpts{}
@@ -549,9 +558,9 @@ func getGroupsByTeam(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c.Params.Paginate != nil && !*c.Params.Paginate {
-		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, nil, nil, opts)
+		groups, totalCount, err = c.App.GetGroupsByTeam(c.Params.TeamId, nil, nil, opts)
 	} else {
-		groups, err = c.App.GetGroupsByTeam(c.Params.TeamId, &c.Params.Page, &c.Params.PerPage, opts)
+		groups, totalCount, err = c.App.GetGroupsByTeam(c.Params.TeamId, &c.Params.Page, &c.Params.PerPage, opts)
 	}
 
 	if err != nil {
@@ -559,7 +568,14 @@ func getGroupsByTeam(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, marshalErr := json.Marshal(groups)
+	b, marshalErr := json.Marshal(struct {
+		Groups []*model.Group `json:"groups"`
+		Count  int            `json:"total_group_count"`
+	}{
+		Groups: groups,
+		Count:  totalCount,
+	})
+
 	if marshalErr != nil {
 		c.Err = model.NewAppError("Api4.getGroupsByTeam", "api.marshal_error", nil, marshalErr.Error(), http.StatusInternalServerError)
 		return

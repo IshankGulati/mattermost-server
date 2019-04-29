@@ -173,12 +173,20 @@ func (a *App) GetGroupsByChannel(channelId string, page, perPage int) ([]*model.
 	return result.Data.([]*model.Group), nil
 }
 
-func (a *App) GetGroupsByTeam(teamId string, page, perPage *int, opts model.GroupSearchOpts) ([]*model.Group, *model.AppError) {
+func (a *App) GetGroupsByTeam(teamId string, page, perPage *int, opts model.GroupSearchOpts) ([]*model.Group, int, *model.AppError) {
 	result := <-a.Srv.Store.Group().GetGroupsByTeam(teamId, page, perPage, opts)
 	if result.Err != nil {
-		return nil, result.Err
+		return nil, 0, result.Err
 	}
-	return result.Data.([]*model.Group), nil
+	groups := result.Data.([]*model.Group)
+
+	result = <-a.Srv.Store.Group().GetGroupsByTeam(teamId, nil, nil, opts)
+	if result.Err != nil {
+		return nil, 0, result.Err
+	}
+	count := len(result.Data.([]*model.Group))
+
+	return groups, count, nil
 }
 
 func (a *App) GetGroupsPage(page, perPage int, opts model.GroupSearchOpts) ([]*model.Group, *model.AppError) {
