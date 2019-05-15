@@ -314,8 +314,8 @@ func testPostStoreDelete(t *testing.T, ss store.Store) {
 		}
 	}
 
-	if err := ss.Post().Delete(o1.Id, model.GetMillis(), deleteByID); err != nil {
-		t.Fatal(err)
+	if r2 := <-ss.Post().Delete(o1.Id, model.GetMillis(), deleteByID); r2.Err != nil {
+		t.Fatal(r2.Err)
 	}
 
 	r5 := <-ss.Post().GetPostsCreatedAt(o1.ChannelId, o1.CreateAt)
@@ -351,8 +351,8 @@ func testPostStoreDelete1Level(t *testing.T, ss store.Store) {
 	o2.RootId = o1.Id
 	o2 = (<-ss.Post().Save(o2)).Data.(*model.Post)
 
-	if err := ss.Post().Delete(o1.Id, model.GetMillis(), ""); err != nil {
-		t.Fatal(err)
+	if r2 := <-ss.Post().Delete(o1.Id, model.GetMillis(), ""); r2.Err != nil {
+		t.Fatal(r2.Err)
 	}
 
 	if r3 := (<-ss.Post().Get(o1.Id)); r3.Err == nil {
@@ -393,8 +393,8 @@ func testPostStoreDelete2Level(t *testing.T, ss store.Store) {
 	o4.Message = "zz" + model.NewId() + "b"
 	o4 = (<-ss.Post().Save(o4)).Data.(*model.Post)
 
-	if err := ss.Post().Delete(o1.Id, model.GetMillis(), ""); err != nil {
-		t.Fatal(err)
+	if r2 := <-ss.Post().Delete(o1.Id, model.GetMillis(), ""); r2.Err != nil {
+		t.Fatal(r2.Err)
 	}
 
 	if r3 := (<-ss.Post().Get(o1.Id)); r3.Err == nil {
@@ -526,9 +526,7 @@ func testPostStoreGetWithChildren(t *testing.T, ss store.Store) {
 		}
 	}
 
-	if err := ss.Post().Delete(o3.Id, model.GetMillis(), ""); err != nil {
-		t.Fatal(err)
-	}
+	store.Must(ss.Post().Delete(o3.Id, model.GetMillis(), ""))
 
 	if r2 := <-ss.Post().Get(o1.Id); r2.Err != nil {
 		t.Fatal(r2.Err)
@@ -539,9 +537,7 @@ func testPostStoreGetWithChildren(t *testing.T, ss store.Store) {
 		}
 	}
 
-	if err := ss.Post().Delete(o2.Id, model.GetMillis(), ""); err != nil {
-		t.Fatal(err)
-	}
+	store.Must(ss.Post().Delete(o2.Id, model.GetMillis(), ""))
 
 	if r3 := <-ss.Post().Get(o1.Id); r3.Err != nil {
 		t.Fatal(r3.Err)
@@ -899,7 +895,7 @@ func testPostStoreSearch(t *testing.T, ss store.Store) {
 	c3.Name = "zz" + model.NewId() + "b"
 	c3.Type = model.CHANNEL_OPEN
 	c3 = (<-ss.Channel().Save(c3, -1)).Data.(*model.Channel)
-	<-ss.Channel().Delete(c3.Id, model.GetMillis())
+	ss.Channel().Delete(c3.Id, model.GetMillis())
 
 	m3 := model.ChannelMember{}
 	m3.ChannelId = c3.Id
@@ -1251,7 +1247,8 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 	m2.UserId = model.NewId()
 	m2.NotifyProps = model.GetDefaultChannelNotifyProps()
 
-	c2 = store.Must(ss.Channel().SaveDirectChannel(c2, m1, m2)).(*model.Channel)
+	c2, err := ss.Channel().SaveDirectChannel(c2, m1, m2)
+	require.Nil(t, err)
 
 	o5 := &model.Post{}
 	o5.ChannelId = c2.Id
@@ -1275,7 +1272,7 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r2 := (<-ss.Post().GetFlaggedPostsForTeam(o1.UserId, c1.TeamId, 0, 2)).Data.(*model.PostList)
 
@@ -1292,7 +1289,7 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r3 := (<-ss.Post().GetFlaggedPostsForTeam(o1.UserId, c1.TeamId, 0, 1)).Data.(*model.PostList)
 
@@ -1327,7 +1324,7 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r4 = (<-ss.Post().GetFlaggedPostsForTeam(o1.UserId, c1.TeamId, 0, 2)).Data.(*model.PostList)
 
@@ -1343,7 +1340,7 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 			Value:    "true",
 		},
 	}
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r4 = (<-ss.Post().GetFlaggedPostsForTeam(o1.UserId, c1.TeamId, 0, 2)).Data.(*model.PostList)
 
@@ -1365,7 +1362,7 @@ func testPostStoreGetFlaggedPostsForTeam(t *testing.T, ss store.Store, s SqlSupp
 			Value:    "true",
 		},
 	}
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r4 = (<-ss.Post().GetFlaggedPostsForTeam(o1.UserId, c1.TeamId, 0, 10)).Data.(*model.PostList)
 
@@ -1415,7 +1412,7 @@ func testPostStoreGetFlaggedPosts(t *testing.T, ss store.Store) {
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r2 := (<-ss.Post().GetFlaggedPosts(o1.UserId, 0, 2)).Data.(*model.PostList)
 
@@ -1432,7 +1429,7 @@ func testPostStoreGetFlaggedPosts(t *testing.T, ss store.Store) {
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r3 := (<-ss.Post().GetFlaggedPosts(o1.UserId, 0, 1)).Data.(*model.PostList)
 
@@ -1467,7 +1464,7 @@ func testPostStoreGetFlaggedPosts(t *testing.T, ss store.Store) {
 		},
 	}
 
-	store.Must(ss.Preference().Save(&preferences))
+	ss.Preference().Save(&preferences)
 
 	r4 = (<-ss.Post().GetFlaggedPosts(o1.UserId, 0, 2)).Data.(*model.PostList)
 
@@ -1520,7 +1517,7 @@ func testPostStoreGetFlaggedPostsForChannel(t *testing.T, ss store.Store) {
 		Value:    "true",
 	}
 
-	store.Must(ss.Preference().Save(&model.Preferences{preference}))
+	ss.Preference().Save(&model.Preferences{preference})
 
 	r = (<-ss.Post().GetFlaggedPostsForChannel(o1.UserId, o1.ChannelId, 0, 10)).Data.(*model.PostList)
 
@@ -1529,10 +1526,10 @@ func testPostStoreGetFlaggedPostsForChannel(t *testing.T, ss store.Store) {
 	}
 
 	preference.Name = o2.Id
-	store.Must(ss.Preference().Save(&model.Preferences{preference}))
+	ss.Preference().Save(&model.Preferences{preference})
 
 	preference.Name = o3.Id
-	store.Must(ss.Preference().Save(&model.Preferences{preference}))
+	ss.Preference().Save(&model.Preferences{preference})
 
 	r = (<-ss.Post().GetFlaggedPostsForChannel(o1.UserId, o1.ChannelId, 0, 1)).Data.(*model.PostList)
 
@@ -1559,7 +1556,7 @@ func testPostStoreGetFlaggedPostsForChannel(t *testing.T, ss store.Store) {
 	}
 
 	preference.Name = o4.Id
-	store.Must(ss.Preference().Save(&model.Preferences{preference}))
+	ss.Preference().Save(&model.Preferences{preference})
 
 	r = (<-ss.Post().GetFlaggedPostsForChannel(o1.UserId, o4.ChannelId, 0, 10)).Data.(*model.PostList)
 
@@ -1730,9 +1727,7 @@ func testPostStoreGetPostsByIds(t *testing.T, ss store.Store) {
 		t.Fatalf("Expected 3 posts in results. Got %v", len(ro4))
 	}
 
-	if err := ss.Post().Delete(ro1.Id, model.GetMillis(), ""); err != nil {
-		t.Fatal(err)
-	}
+	store.Must(ss.Post().Delete(ro1.Id, model.GetMillis(), ""))
 
 	if ro5 := store.Must(ss.Post().GetPostsByIds(postIds)).([]*model.Post); len(ro5) != 3 {
 		t.Fatalf("Expected 3 posts in results. Got %v", len(ro5))
@@ -2018,7 +2013,7 @@ func testPostStoreGetDirectPostParentsForExportAfter(t *testing.T, ss store.Stor
 	m2.UserId = u2.Id
 	m2.NotifyProps = model.GetDefaultChannelNotifyProps()
 
-	<-ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
+	ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
 
 	p1 := &model.Post{}
 	p1.ChannelId = o1.Id
@@ -2070,11 +2065,11 @@ func testPostStoreGetDirectPostParentsForExportAfterDeleted(t *testing.T, ss sto
 	m2.UserId = u2.Id
 	m2.NotifyProps = model.GetDefaultChannelNotifyProps()
 
-	<-ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
+	ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
 
 	o1.DeleteAt = 1
-	result := <-ss.Channel().SetDeleteAt(o1.Id, 1, 1)
-	assert.Nil(t, result.Err)
+	err := ss.Channel().SetDeleteAt(o1.Id, 1, 1)
+	assert.Nil(t, err)
 
 	p1 := &model.Post{}
 	p1.ChannelId = o1.Id
@@ -2134,7 +2129,7 @@ func testPostStoreGetDirectPostParentsForExportAfterBatched(t *testing.T, ss sto
 		m2.UserId = u2.Id
 		m2.NotifyProps = model.GetDefaultChannelNotifyProps()
 
-		<-ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
+		ss.Channel().SaveDirectChannel(&o1, &m1, &m2)
 
 		p1 := &model.Post{}
 		p1.ChannelId = o1.Id
